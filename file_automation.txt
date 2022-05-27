@@ -1,0 +1,88 @@
+$ErrorActionPreference="SilentlyContinue"
+Stop-Transcript | out-null
+$ErrorActionPreference = "Continue"
+Start-Transcript -path C:\Users\Icon\Desktop\test\logfile2.txt -append
+
+#specify the path to the folder you want to monitor:
+$Path = 'C:\Users\Icon\Desktop\test\monitored'
+
+# specify which files you want to monitor
+$FileFilter = '*'  
+
+# specify whether you want to monitor subfolders as well:
+$IncludeSubfolders = $true
+
+# specify the file or folder properties you want to monitor:
+$AttributeFilter = [IO.NotifyFilters]::FileName, [IO.NotifyFilters]::LastWrite 
+
+# specify the type of changes you want to monitor:
+$ChangeTypes = [System.IO.WatcherChangeTypes]::All
+
+# specify the maximum time (in milliseconds) you want to wait for changes:
+$Timeout = 1000
+
+$startDate = Get-Date
+
+
+#function wich returns time in the given format
+function Get-TimeStamp {
+    
+    return "[{0:MM/dd/yy} {0:HH:mm:ss}]" -f (Get-Date)
+    
+}
+
+
+# define a function that gets called for every change:
+function Invoke-SomeAction
+{
+  param
+  (
+    [Parameter(Mandatory)]
+    [System.IO.WaitForChangedResult]
+    $ChangeInformation
+  )
+  
+  Write-output "$(Get-Timestamp) Change detected" | Out-file "C:\Users\Icon\Desktop\test\logfile.txt" -append
+  Write-output $ChangeInformation | Out-file "C:\Users\Icon\Desktop\test\logfile.txt" -append
+  C:\Users\Icon\Desktop\test\command\unzip.BAT
+
+}
+
+try
+{
+  Write-output "$(Get-Timestamp)FileSystemWatcher is monitoring $Path"
+  
+  # create a filesystemwatcher object
+  $watcher = New-Object -TypeName IO.FileSystemWatcher -ArgumentList $Path, $FileFilter -Property @{
+    IncludeSubdirectories = $IncludeSubfolders
+    NotifyFilter = $AttributeFilter
+  }
+
+    # start monitoring manually in a loop:
+  do
+  {
+    # wait for changes for the specified timeout
+    # IMPORTANT: while the watcher is active, PowerShell cannot be stopped
+    # so it is recommended to use a timeout of 1000ms and repeat the
+    # monitoring in a loop. This way, you have the chance to abort the
+    # script every second.
+    $result = $watcher.WaitForChanged($ChangeTypes, $Timeout)
+    # if there was a timeout, continue monitoring:
+    if ($result.TimedOut) { continue }
+    
+    Invoke-SomeAction -Change $result
+    # the loop runs forever until you hit CTRL+C    
+  } while ($startDate.AddMinutes(1) -gt (Get-Date))
+}
+finally
+{
+  # release the watcher and free its memory:
+  $watcher.Dispose()
+  Write-output " $(get-timestamp) FileSystemWatcher removed." | Out-file "C:\Users\Icon\Desktop\test\logfile.txt" -append
+  start-process "C:\Program Files (x86)\USDA\RUSLE2\ARS\Rusle2.exe"
+  Write-output " $(get-timestamp) exe started" | Out-file "C:\Users\Icon\Desktop\test\logfile.txt" -append
+
+  
+}
+Stop-Transcript
+
