@@ -43,7 +43,7 @@ function Invoke-SomeAction
   )
   
   Write-output "$(Get-Timestamp) Change detected" | Out-file "C:\Users\Icon\Desktop\test\logfile.txt" -append
-  Write-output $ChangeInformation | Out-file "C:\Users\Icon\Desktop\test\logfile.txt" -append
+  Write-output "$ChangeInformation | Out-file "C:\Users\Icon\Desktop\test\logfile.txt" -append
   C:\Users\Icon\Desktop\test\command\unzip.BAT
 
 }
